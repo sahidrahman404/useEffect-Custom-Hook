@@ -2,7 +2,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 function Greeting({ initialName = "" }: { initialName?: string }) {
   const [name, setName] = useState<string>(
-    window.localStorage.getItem("name") || initialName
+    () => window.localStorage.getItem("name") || initialName
   );
 
   useEffect(() => {
