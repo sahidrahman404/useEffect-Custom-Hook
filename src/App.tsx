@@ -1,21 +1,21 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 
 interface SerializeAndDeserialize {
-  serialize: <T>(a: T) => T;
-  deserialize: <T>(a: T) => T;
+  serialize: <T>(a: T) => string;
+  deserialize: <T>(a: T) => string;
 }
 
-const useLocalStorageWithState = (
+const useLocalStorageWithState = function <T>(
   key: string,
   initialProps?: unknown,
   options?: SerializeAndDeserialize
-): [string, React.Dispatch<React.SetStateAction<string>>] => {
+): [T, React.Dispatch<React.SetStateAction<T>>] {
   const defaultOptions = {
     serialize: JSON.stringify,
     deserialize: JSON.parse,
   };
 
-  const [state, setState] = useState<string>(() => {
+  const [state, setState] = useState<T>(() => {
     const valueInLocalStorage = window.localStorage.getItem(key);
     if (valueInLocalStorage) {
       return options
@@ -29,7 +29,9 @@ const useLocalStorageWithState = (
   useEffect(() => {
     window.localStorage.setItem(
       key,
-      options ? options.serialize(state) : defaultOptions.serialize(state)
+      options
+        ? options.serialize(state as T)
+        : defaultOptions.serialize(state as T)
     );
   }, [options, defaultOptions, key, state]);
 
@@ -37,7 +39,7 @@ const useLocalStorageWithState = (
 };
 
 function Greeting({ initialName = "" }: { initialName?: string }) {
-  const [name, setName] = useLocalStorageWithState("name");
+  const [name, setName] = useLocalStorageWithState<string>("name");
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);
