@@ -1,0 +1,137 @@
+#+title: useEffect and Custom Hook
+
+* What is React useEffect?
+~React.useEffect~ is a built-in hook that allows you to run some custom code after
+React renders (and re-renders) your component to the DOM. It accepts a callback
+function which React will call after the DOM has been updated
+#+begin_src tsx
+useEffect(() => {
+  // your side-effect code here.
+  // this is where you can make HTTP requests or interact with browser APIs.
+},[])
+#+end_src
+* How does useEffect work?
+#+ATTR_ORG: :width 30%
+[[file:public/hook-flow.png]]
+* Effect Callback and Effect dependencies
+#+begin_src tsx
+function Greeting({ initialName = "" }: { initialName?: string }) {
+  const [name, setName] = useState<string>(
+    // this is a lazy initializer
+    // to make sure we only read from local storage
+    // when it's needed
+    () => window.localStorage.getItem("name") ?? initialName
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem("name", name);
+  }, [name]);
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+
+  return (
+    <div>
+      <form
+        onSubmit={(event: FormEvent<HTMLFormElement>) => event.preventDefault()}
+      >
+        <label htmlFor="name">Name: </label>
+        <input onChange={handleChange} id="name" />
+      </form>
+      {name ? <strong>Hello {name}</strong> : "Please type your name"}
+    </div>
+  );
+}
+
+function App() {
+  return <Greeting initialName="rahman" />;
+}
+#+end_src
+
+React useEffect has two parameters:
+1. ~EffectCallback~
+   Effect callback should return void
+   * For some use cases like fetching data we need to return a ~clean-up function~
+2. ~DependencyList~
+   The callback we're passing to React.useEffect is called after every render of
+   our component (including re-renders). This is exactly what we want because we
+   want to make sure that the ~name~ is saved into localStorage whenever it
+   changes, but there are various reasons a component can be re-rendered (for
+   example, when a parent component in the application tree gets re-rendered).
+
+   Really, we only want localStorage to get updated when the name state actually
+   changes. It doesn't need to re-run any other time. Luckily for us,
+   React.useEffect allows you to pass a second argument called the "dependency
+   array" which signals to React that your effect callback function should be
+   called when (and only when) those dependencies change. So we can use this to
+   avoid doing unnecessary work!
+
+   Add a dependencies array for React.useEffect to avoid the callback being
+   called too frequently.
+* Custom Hook
+#+begin_src tsx
+interface SerializeAndDeserialize {
+  serialize: <T>(a: T) => T;
+  deserialize: <T>(a: T) => T;
+}
+
+const useLocalStorageWithState = (
+  key: string,
+  initialProps?: unknown,
+  options?: SerializeAndDeserialize
+): [string, React.Dispatch<React.SetStateAction<string>>] => {
+  const defaultOptions = {
+    serialize: JSON.stringify,
+    deserialize: JSON.parse,
+  };
+
+  const [state, setState] = useState<string>(() => {
+    const valueInLocalStorage = window.localStorage.getItem(key);
+    if (valueInLocalStorage) {
+      return options
+        ? options.deserialize(valueInLocalStorage)
+        : defaultOptions.deserialize(valueInLocalStorage);
+    }
+
+    return typeof initialProps === "function" ? initialProps() : "";
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      key,
+      options ? options.serialize(state) : defaultOptions.serialize(state)
+    );
+  }, [options, key, state]);
+
+  return [state, setState];
+};
+
+function Greeting({ initialName = "" }: { initialName?: string }) {
+  const [name, setName] = useLocalStorageWithState("name");
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setName(event.target.value);
+  };
+
+  return (
+    <div>
+      <form
+        onSubmit={(event: FormEvent<HTMLFormElement>) => event.preventDefault()}
+      >
+        <label htmlFor="name">Name: </label>
+        <input onChange={handleChange} id="name" />
+      </form>
+      {name ? <strong>Hello {name}</strong> : "Please type your name"}
+    </div>
+  );
+}
+
+function App() {
+  return <Greeting initialName="rahman" />;
+}
+#+end_src
+The best part of hooks is that if you find a bit of logic inside your component
+function that you think would be useful elsewhere, you can put that in another
+function and call it from the components that need it (just like regular
+JavaScript). These functions you create are called "custom hooks".
