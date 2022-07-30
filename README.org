@@ -50,10 +50,10 @@ function App() {
 #+end_src
 
 React useEffect has two parameters:
-1. ~EffectCallback~
+1. EffectCallback
    Effect callback should return void
    * For some use cases like fetching data we need to return a ~clean-up function~
-2. ~DependencyList~
+2. DependencyList
    The callback we're passing to React.useEffect is called after every render of
    our component (including re-renders). This is exactly what we want because we
    want to make sure that the ~name~ is saved into localStorage whenever it
