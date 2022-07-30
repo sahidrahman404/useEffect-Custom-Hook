@@ -102,7 +102,7 @@ const useLocalStorageWithState = (
       key,
       options ? options.serialize(state) : defaultOptions.serialize(state)
     );
-  }, [options, key, state]);
+  }, [options, defaultOptions, key, state]);
 
   return [state, setState];
 };
