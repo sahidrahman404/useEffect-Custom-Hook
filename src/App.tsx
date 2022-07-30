@@ -14,6 +14,7 @@ const useLocalStorageWithState = function <T>(
     serialize: JSON.stringify,
     deserialize: JSON.parse,
   };
+  const defaultProps = "";
 
   const [state, setState] = useState<T>(() => {
     const valueInLocalStorage = window.localStorage.getItem(key);
@@ -23,7 +24,14 @@ const useLocalStorageWithState = function <T>(
         : defaultOptions.deserialize(valueInLocalStorage);
     }
 
-    return typeof initialProps === "function" ? initialProps() : "";
+    if (typeof initialProps === "function") {
+      return initialProps();
+    } else if (String(initialProps)) {
+      return initialProps;
+    }
+
+    return defaultProps;
+
   });
 
   useEffect(() => {
