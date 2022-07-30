@@ -39,7 +39,7 @@ const useLocalStorageWithState = function <T>(
 };
 
 function Greeting({ initialName = "" }: { initialName?: string }) {
-  const [name, setName] = useLocalStorageWithState<string>("name");
+  const [name, setName] = useLocalStorageWithState<string>("name", initialName);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setName(event.target.value);
