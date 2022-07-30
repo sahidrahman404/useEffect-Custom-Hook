@@ -72,21 +72,21 @@ React useEffect has two parameters:
 * Custom Hook
 #+begin_src tsx
 interface SerializeAndDeserialize {
-  serialize: <T>(a: T) => T;
-  deserialize: <T>(a: T) => T;
+  serialize: <T>(a: T) => string;
+  deserialize: <T>(a: T) => string;
 }
 
-const useLocalStorageWithState = (
+const useLocalStorageWithState = function <T>(
   key: string,
   initialProps?: unknown,
   options?: SerializeAndDeserialize
-): [string, React.Dispatch<React.SetStateAction<string>>] => {
+): [T, React.Dispatch<React.SetStateAction<T>>] {
   const defaultOptions = {
     serialize: JSON.stringify,
     deserialize: JSON.parse,
   };
 
-  const [state, setState] = useState<string>(() => {
+  const [state, setState] = useState<T>(() => {
     const valueInLocalStorage = window.localStorage.getItem(key);
     if (valueInLocalStorage) {
       return options
@@ -100,36 +100,14 @@ const useLocalStorageWithState = (
   useEffect(() => {
     window.localStorage.setItem(
       key,
-      options ? options.serialize(state) : defaultOptions.serialize(state)
+      options
+        ? options.serialize(state as T)
+        : defaultOptions.serialize(state as T)
     );
   }, [options, defaultOptions, key, state]);
 
   return [state, setState];
 };
-
-function Greeting({ initialName = "" }: { initialName?: string }) {
-  const [name, setName] = useLocalStorageWithState("name");
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setName(event.target.value);
-  };
-
-  return (
-    <div>
-      <form
-        onSubmit={(event: FormEvent<HTMLFormElement>) => event.preventDefault()}
-      >
-        <label htmlFor="name">Name: </label>
-        <input onChange={handleChange} id="name" />
-      </form>
-      {name ? <strong>Hello {name}</strong> : "Please type your name"}
-    </div>
-  );
-}
-
-function App() {
-  return <Greeting initialName="rahman" />;
-}
 #+end_src
 The best part of hooks is that if you find a bit of logic inside your component
 function that you think would be useful elsewhere, you can put that in another
